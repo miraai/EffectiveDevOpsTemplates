@@ -1,9 +1,6 @@
 """Generating CloudFormation template."""
-
 from ipaddress import ip_network
-
 from ipify import get_ip
-
 from troposphere import (
 	Base64,
 	ec2,
@@ -15,18 +12,21 @@ from troposphere import (
 	Template,
 )
 
-ApplicationName = "helloworld"
-ApplicationPort = "3000"
+APP_NAME = 'helloworld'
+APP_PORT = '3000'
 
-GithubAccount = "miraai"
-GithubAnsibleUrl = "https://github.com/{}/Ansible".format(GithubAccount)
+GITHUB_USERNAME = 'miraai'
+GITHUB_BASE_URL = 'https://github.com/'
+GITHUB_REPO_NAME = '/Ansible'
+GITHUB_ANS_REPO =  GITHUB_BASE_URL + GITHUB_USERNAME + GITHUB_REPO_NAME
+FILE_NAME = 'ansiblebase.template'
 
-AnsiblePullCmd = "/usr/local/bin/ansible-pull -U {} {}.yml -i localhost".format(
-	GithubAnsibleUrl,
-	ApplicationName
+ansible_pull_cmd = "/usr/local/bin/ansible-pull -U {} {}.yml -i localhost".format(
+	GITHUB_ANS_REPO,
+	APP_NAME
 )
 
-PublicCidrIp = str(ip_network(get_ip())) #Classless Inter-Domain Routing IP (CidrIp)
+public_cidr_ip = str(ip_network(get_ip())) #Classless Inter-Domain Routing IP (CidrIp)
 
 t = Template()
 
@@ -41,18 +41,18 @@ t.add_parameter(Parameter(
 
 t.add_resource(ec2.SecurityGroup(
 	"SecurityGroup",	
-	GroupDescription="Allow SSH and TCP/{} access".format(ApplicationPort),
+	GroupDescription="Allow SSH and TCP/{} access".format(APP_PORT),
 	SecurityGroupIngress=[
 		ec2.SecurityGroupRule( #SSH connection
 			IpProtocol="tcp",
 			FromPort="22",
 			ToPort="22",
-			CidrIp=PublicCidrIp, #connect from the local IP
+			CidrIp=public_cidr_ip, # Connect from the local IP
 		),
 		ec2.SecurityGroupRule( #TCP connection
 			IpProtocol="tcp",
-			FromPort=ApplicationPort,
-			ToPort=ApplicationPort,
+			FromPort=APP_PORT,
+			ToPort=APP_PORT,
 			CidrIp="0.0.0.0/0",
 		),
 	],
@@ -62,8 +62,8 @@ ud = Base64(Join('\n', [
     "#!/bin/bash",
     "yum install --enablerepo=epel -y git",
     "pip install ansible",
-    AnsiblePullCmd,
-    "echo '*/10 * * * * {}' > /etc/cron.d/ansible-pull".format(AnsiblePullCmd)
+    ansible_pull_cmd,
+    "echo '*/10 * * * * {}' > /etc/cron.d/ansible-pull".format(ansible_pull_cmd)
    ]))
 
 t.add_resource(ec2.Instance(
@@ -86,8 +86,10 @@ t.add_output(Output(
 	Description="Application Endpoint",
 	Value=Join("", [
 		"http://", GetAtt("instance", "PublicDnsName"),
-		":", ApplicationPort,
+		":", APP_PORT,
 	]),
 ))
 
-print t.to_json()
+with open(FILE_NAME, 'w+') as f:
+	f.write(t.to_json())
+f.close()
