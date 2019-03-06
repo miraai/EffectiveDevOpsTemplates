@@ -33,13 +33,13 @@ t.add_resource(ec2.SecurityGroup(
 	"SecurityGroup",	
 	GroupDescription="Allow SSH and TCP/{} access".format(ApplicationPort),
 	SecurityGroupIngress=[
-		ec2.SecurityGroupRule(
+		ec2.SecurityGroupRule( #SSH connection
 			IpProtocol="tcp",
 			FromPort="22",
 			ToPort="22",
-			CidrIp=PublicCidrIp,
+			CidrIp=PublicCidrIp, #connect from the local IP
 		),
-		ec2.SecurityGroupRule(
+		ec2.SecurityGroupRule( #TCP connection
 			IpProtocol="tcp",
 			FromPort=ApplicationPort,
 			ToPort=ApplicationPort,
