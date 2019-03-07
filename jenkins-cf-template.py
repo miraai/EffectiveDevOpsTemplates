@@ -126,6 +126,4 @@ t.add_output(Output(
 	]),
 ))
 
-with open(FILE_NAME, 'w+') as f:
-	f.write(t.to_json())
-f.close()
+print t.to_json()
