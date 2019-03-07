@@ -46,7 +46,7 @@ public_cidr_ip = str(ip_network(get_ip())) #Classless Inter-Domain Routing IP (C
 
 t = Template()
 
-t.add_description("Effective DevOps in AWS: HelloHell Web Application")
+t.add_description("Effective DevOps in AWS")
 
 t.add_parameter(Parameter(
 	"KeyPair",
